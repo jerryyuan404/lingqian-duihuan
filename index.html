@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0">
+    <title>零钱兑换处 · 悦美储蓄所</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(135deg, #fbe9c3 0%, #f7d38b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Fredoka', 'Comic Sans MS', '幼圆', 'YouYuan', sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .main-card {
+            background: #fffef0;
+            border-radius: 60px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.15);
+            padding: 25px;
+            max-width: 950px;
+            width: 100%;
+            border: 3px solid #fbc96e;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        h1 {
+            text-align: center;
+            color: #b45f2b;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0 #ffe2a4;
+        }
+        .showcase {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: #fef5e6;
+            border-radius: 25px;
+            padding: 12px 10px;
+            border: 2px dashed #e0a46b;
+        }
+        .showcase img.bill-show {
+            height: 70px;
+            width: auto;
+            border-radius: 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            background: #fff;
+            object-fit: contain;
+        }
+        .showcase img.coin-show {
+            height: 55px;
+            width: 55px;
+            border-radius: 50%;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            object-fit: cover;
+            background: #fff;
+        }
+        .target-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .target-btn {
+            background: #ffe5c2;
+            border: 3px solid #f3b05b;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.2s;
+            color: #603a1f;
+        }
+        .target-btn.active {
+            background: #ffb142;
+            border-color: #b45f2b;
+            color: white;
+            box-shadow: 0 4px 0 #8f4a1c;
+        }
+        .workspace {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .coin-pool {
+            flex: 1 1 320px;
+            background: #fdf4e3;
+            border-radius: 30px;
+            padding: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            border: 2px solid #e7ad6b;
+            min-height: 120px;
+        }
+        /* 拖拽硬币：圆形 */
+        .draggable-coin.coin-drag {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: grab;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 4px 3px rgba(0,0,0,0.2));
+            background: #fff;
+            border: 2px solid #f3b05b;
+        }
+        /* 拖拽纸币：保持真实比例，宽度加大 */
+        .draggable-coin.bill-drag {
+            width: 130px;
+            height: auto;
+            max-height: 70px;
+            border-radius: 6px;
+            object-fit: contain;
+            cursor: grab;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 4px 3px rgba(0,0,0,0.2));
+            background: #fff;
+            border: 2px solid #f3b05b;
+        }
+        .draggable-coin:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        .drop-zone {
+            flex: 1 1 320px;
+            background: #faf3e0;
+            border-radius: 30px;
+            border: 4px dashed #d68d3c;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            gap: 10px;
+            min-height: 120px;
+            transition: background 0.2s;
+            align-content: flex-start;
+        }
+        .drop-zone.hover {
+            background: #fde4b3;
+        }
+        .drop-placeholder {
+            color: #8b5a2b;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+            width: 100%;
+        }
+        /* 投放硬币：圆形小图标 */
+        .dropped-item.coin-drop {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+            pointer-events: none;
+            background: #fff;
+            border: 2px solid #daa520;
+        }
+        /* 投放纸币：长方形，完整展示 */
+        .dropped-item.bill-drop {
+            width: 100px;
+            height: auto;
+            max-height: 55px;
+            border-radius: 4px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+            pointer-events: none;
+            background: #fff;
+            border: 2px solid #daa520;
+        }
+        .btn-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: #ffcd94;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a2c16;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #c8853e;
+            border: 2px solid #e7ad6b;
+            transition: 0.1s;
+        }
+        .action-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #c8853e;
+        }
+        .message-box {
+            text-align: center;
+            font-size: 1.3rem;
+            min-height: 32px;
+            color: #b5571a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="main-card">
+    <h1>🏦 零钱兑换处</h1>
+
+    <!-- 人民币展示区 -->
+    <div class="showcase" id="showcase">
+        <img src="images/50yuan.png" alt="50元" class="bill-show">
+        <img src="images/10yuan.png" alt="10元" class="bill-show">
+        <img src="images/5yuan.png" alt="5元" class="bill-show">
+        <img src="images/1yuan.png" alt="1元" class="bill-show">
+        <img src="images/5jiao-coin.png" alt="5角" class="coin-show">
+        <img src="images/1jiao-coin.png" alt="1角" class="coin-show">
+        <img src="images/5fen-coin.png" alt="5分" class="coin-show" style="width:48px; height:48px;">
+        <img src="images/2fen-coin.png" alt="2分" class="coin-show" style="width:46px; height:46px;">
+        <img src="images/1fen-coin.png" alt="1分" class="coin-show" style="width:44px; height:44px;">
+    </div>
+
+    <!-- 兑换目标 -->
+    <div class="target-row" id="targetRow">
+        <span style="font-weight:bold; color:#6b3a1f;">🎯 我要兑换：</span>
+        <button class="target-btn active" data-target="1元">1元</button>
+        <button class="target-btn" data-target="5元">5元</button>
+        <button class="target-btn" data-target="10元">10元</button>
+        <button class="target-btn" data-target="20元">20元</button>
+        <button class="target-btn" data-target="50元">50元</button>
+        <button class="target-btn" data-target="100元">100元</button>
+    </div>
+
+    <!-- 操作区 -->
+    <div class="workspace">
+        <div class="coin-pool" id="coinPool"></div>
+        <div class="drop-zone" id="dropZone">
+            <span class="drop-placeholder">📥 把零钱拖到这里</span>
+        </div>
+    </div>
+
+    <div class="btn-row">
+        <button class="action-btn" id="confirmBtn">✅ 确定兑换</button>
+        <button class="action-btn" id="resetBtn">🔄 重新开始</button>
+    </div>
+    <div class="message-box" id="messageBox">👆 从左边拖拽零钱到方框里，然后点“确定”检查吧！</div>
+</div>
+
+<script>
+    (function() {
+        const denominations = {
+            '1分': 0.01,
+            '2分': 0.02,
+            '5分': 0.05,
+            '1角': 0.1,
+            '5角': 0.5,
+            '1元': 1,
+            '5元': 5,
+            '10元': 10,
+            '20元': 20,
+            '50元': 50,
+            '100元': 100
+        };
+        const allDraggableNames = ['1分', '2分', '5分', '1角', '5角', '1元', '5元', '10元', '20元', '50元'];
+        const imagePaths = {
+            '1分': 'images/1fen-coin.png',
+            '2分': 'images/2fen-coin.png',
+            '5分': 'images/5fen-coin.png',
+            '1角': 'images/1jiao-coin.png',
+            '5角': 'images/5jiao-coin.png',
+            '1元': 'images/1yuan.png',
+            '5元': 'images/5yuan.png',
+            '10元': 'images/10yuan.png',
+            '20元': 'images/20yuan.png',
+            '50元': 'images/50yuan.png',
+            '100元': 'images/100yuan.png'
+        };
+
+        function isCoin(name) {
+            return name.includes('分') || name.includes('角');
+        }
+
+        let currentTarget = '1元';
+        let targetValue = denominations['1元'];
+        let droppedValues = [];
+        const targetButtons = document.querySelectorAll('.target-btn');
+        const coinPool = document.getElementById('coinPool');
+        const dropZone = document.getElementById('dropZone');
+        const messageBox = document.getElementById('messageBox');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function formatFen(fen) {
+            if (fen === 0) return '0分';
+            const yuan = Math.floor(fen / 100);
+            const jiao = Math.floor((fen % 100) / 10);
+            const fenRemain = fen % 10;
+            let result = '';
+            if (yuan > 0) result += yuan + '元';
+            if (jiao > 0) result += jiao + '角';
+            if (fenRemain > 0) result += fenRemain + '分';
+            return result;
+        }
+
+        function playBeep(freq = 500, dur = 0.1) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+                osc.start(); osc.stop(ctx.currentTime + dur);
+            } catch(e) {}
+        }
+
+        function updateDropZoneUI() {
+            const placeholder = dropZone.querySelector('.drop-placeholder');
+            if (placeholder) {
+                placeholder.style.display = droppedValues.length > 0 ? 'none' : 'block';
+            }
+        }
+
+        function addDroppedItem(value, name, imgSrc) {
+            const item = document.createElement('img');
+            if (isCoin(name)) {
+                item.className = 'dropped-item coin-drop';
+            } else {
+                item.className = 'dropped-item bill-drop';
+            }
+            item.src = imgSrc;
+            item.alt = name;
+            item.title = name;
+            item.onerror = function() {
+                if (isCoin(name)) {
+                    item.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="45" height="45" viewBox="0 0 45 45"%3E%3Ccircle cx="22.5" cy="22.5" r="22" fill="%23f0f0f0" stroke="%23ccc"/%3E%3Ctext x="22" y="26" text-anchor="middle" fill="%23999" font-size="12"%3E?%3C/text%3E%3C/svg%3E';
+                } else {
+                    item.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="55" viewBox="0 0 100 55"%3E%3Crect width="100" height="55" fill="%23f0f0f0" stroke="%23ccc" rx="4"/%3E%3Ctext x="50" y="30" text-anchor="middle" fill="%23999" font-size="14"%3E?%3C/text%3E%3C/svg%3E';
+                }
+            };
+            dropZone.appendChild(item);
+            updateDropZoneUI();
+        }
+
+        function resetExchange() {
+            droppedValues = [];
+            const items = dropZone.querySelectorAll('.dropped-item');
+            items.forEach(el => el.remove());
+            const placeholder = dropZone.querySelector('.drop-placeholder');
+            if (placeholder) placeholder.style.display = 'block';
+            messageBox.textContent = '👆 从左边拖拽零钱到方框里，然后点“确定”检查吧！';
+            playBeep(400, 0.1);
+        }
+
+        function setTarget(targetName) {
+            currentTarget = targetName;
+            targetValue = denominations[targetName];
+            targetButtons.forEach(btn => {
+                if (btn.dataset.target === targetName) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+            resetExchange();
+            generateDraggableCoins();
+            messageBox.textContent = `🎯 目标：兑换 ${targetName} ，开始拖入零钱吧！`;
+        }
+
+        function generateDraggableCoins() {
+            coinPool.innerHTML = '';
+            const available = allDraggableNames.filter(name => denominations[name] < targetValue);
+            if (available.length === 0) {
+                coinPool.innerHTML = '<span style="color:#8b5a2b;">没有更小面额了～</span>';
+                return;
+            }
+            available.forEach(name => {
+                const img = document.createElement('img');
+                if (isCoin(name)) {
+                    img.className = 'draggable-coin coin-drag';
+                } else {
+                    img.className = 'draggable-coin bill-drag';
+                }
+                img.src = imagePaths[name] || '';
+                img.alt = name;
+                img.title = name;
+                img.dataset.value = denominations[name];
+                img.dataset.name = name;
+                img.onerror = function() {
+                    if (isCoin(name)) {
+                        img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="55" height="55" viewBox="0 0 55 55"%3E%3Ccircle cx="27.5" cy="27.5" r="26" fill="%23f9f9f9" stroke="%23bbb"/%3E%3Ctext x="27" y="32" text-anchor="middle" fill="%23999" font-size="14"%3E?%3C/text%3E%3C/svg%3E';
+                    } else {
+                        img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="130" height="70" viewBox="0 0 130 70"%3E%3Crect width="130" height="70" fill="%23f9f9f9" stroke="%23bbb" rx="6"/%3E%3Ctext x="65" y="40" text-anchor="middle" fill="%23999" font-size="16"%3E?%3C/text%3E%3C/svg%3E';
+                    }
+                };
+                coinPool.appendChild(img);
+            });
+        }
+
+        // 拖拽逻辑
+        let draggedElement = null;
+        let dragClone = null;
+        let offsetX, offsetY;
+        let isDragging = false;
+
+        function onDragStart(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('draggable-coin')) {
+                draggedElement = e.target;
+                const rect = draggedElement.getBoundingClientRect();
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+                dragClone = draggedElement.cloneNode(true);
+                dragClone.style.position = 'fixed';
+                dragClone.style.zIndex = '1000';
+                dragClone.style.pointerEvents = 'none';
+                dragClone.style.opacity = '0.9';
+                dragClone.style.width = rect.width + 'px';
+                dragClone.style.height = rect.height + 'px';
+                dragClone.style.left = (e.clientX - offsetX) + 'px';
+                dragClone.style.top = (e.clientY - offsetY) + 'px';
+                document.body.appendChild(dragClone);
+                isDragging = true;
+                window.addEventListener('pointermove', onDragMove);
+                window.addEventListener('pointerup', onDragEnd);
+                playBeep(600, 0.05);
+            }
+        }
+
+        function onDragMove(e) {
+            if (!isDragging || !dragClone) return;
+            e.preventDefault();
+            dragClone.style.left = (e.clientX - offsetX) + 'px';
+            dragClone.style.top = (e.clientY - offsetY) + 'px';
+            const dropRect = dropZone.getBoundingClientRect();
+            const cloneRect = dragClone.getBoundingClientRect();
+            const cx = cloneRect.left + cloneRect.width/2;
+            const cy = cloneRect.top + cloneRect.height/2;
+            if (cx >= dropRect.left && cx <= dropRect.right && cy >= dropRect.top && cy <= dropRect.bottom) {
+                dropZone.classList.add('hover');
+            } else {
+                dropZone.classList.remove('hover');
+            }
+        }
+
+        function onDragEnd(e) {
+            window.removeEventListener('pointermove', onDragMove);
+            window.removeEventListener('pointerup', onDragEnd);
+            if (!isDragging) return;
+            isDragging = false;
+            if (dragClone) {
+                document.body.removeChild(dragClone);
+                dragClone = null;
+            }
+            dropZone.classList.remove('hover');
+            if (!draggedElement) return;
+            const dropRect = dropZone.getBoundingClientRect();
+            if (e.clientX >= dropRect.left && e.clientX <= dropRect.right &&
+                e.clientY >= dropRect.top && e.clientY <= dropRect.bottom) {
+                const value = parseFloat(draggedElement.dataset.value);
+                const name = draggedElement.dataset.name;
+                if (!isNaN(value)) {
+                    droppedValues.push(value);
+                    addDroppedItem(value, name, draggedElement.src);
+                    playBeep(520, 0.08);
+                }
+            }
+            draggedElement = null;
+        }
+
+        coinPool.addEventListener('pointerdown', onDragStart);
+
+        confirmBtn.addEventListener('click', () => {
+            const totalFen = Math.round(droppedValues.reduce((sum, v) => sum + v, 0) * 100);
+            const targetFen = Math.round(targetValue * 100);
+            const diffFen = targetFen - totalFen;
+            if (diffFen === 0) {
+                messageBox.innerHTML = '🎉 完全正确！兑换成功！你真是个储蓄小能手！ 🎉';
+                playBeep(880, 0.2);
+                setTimeout(() => playBeep(1100, 0.2), 200);
+            } else if (diffFen > 0) {
+                messageBox.innerHTML = `❌ 还不够哦！还差 ${formatFen(diffFen)} ，再拖一些零钱进来吧。`;
+            } else {
+                messageBox.innerHTML = `❌ 太多了！你多放了 ${formatFen(-diffFen)} ，拿走一些再试试。`;
+            }
+        });
+
+        resetBtn.addEventListener('click', resetExchange);
+        targetButtons.forEach(btn => {
+            btn.addEventListener('click', () => setTarget(btn.dataset.target));
+        });
+
+        setTarget('1元');
+        generateDraggableCoins();
+        updateDropZoneUI();
+    })();
+</script>
+</body>
+</html>
